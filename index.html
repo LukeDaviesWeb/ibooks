@@ -1,0 +1,362 @@
+<html>
+  <head>
+    <title>Books API Example</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+
+  </head>
+  <body>
+    <div id="content">
+      <div class="header">
+        <h1>Booklist</h1>
+        <p style="color:white" class="tagline">Search Google Books</p>
+      </div>
+
+      <div class="search">
+        <input id="searchField" type="text">
+        <button id="searchBooksBtn">Search</button>
+      </div>
+      
+      <section id="bookList">
+
+      </section>
+    </div>
+    <style>
+      body{
+        font-family: 'Roboto', sans-serif;
+        background: #1FA2FF;  /* fallback for old browsers */
+        background: -webkit-linear-gradient(to right, #A6FFCB, #12D8FA, #1FA2FF);  /* Chrome 10-25, Safari 5.1-6 */
+        background: linear-gradient(to right, #A6FFCB, #12D8FA, #1FA2FF); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+      }
+
+      .flex-row{
+        display: flex;
+        flex-direction: row;
+        margin: 30px 0px;
+      }
+
+      .justify-center{
+        justify-content: center;
+      }
+
+      .align-center{
+        align-items: center;
+      }
+
+      .space-between{
+        justify-content: space-between;
+      }
+
+      .space-around{
+        justify-content: space-around;
+      }
+
+      .header{
+        text-align: center;
+        margin: 150px 0px;
+      }
+
+      .header h1{
+        color: white;
+        font-size: 70px;
+      }
+
+
+      .search{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #searchField{
+        padding: 15px;
+        min-width: 333px;
+        background-color: #58729129;
+        border: none;
+        border-radius: 3px;
+        color: white;
+      }
+
+      #searchBooksBtn{
+        padding: 15px;
+        margin-left: 5px;
+        border-radius: 3px;
+        background-color: #58729129;
+        border: none;
+        color: white;
+        cursor: pointer ;
+      }
+
+      #searchBooksBtn:hover{
+        background-color:#58729129;
+      }
+
+      #bookList ul {
+        padding: 0;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+      } 
+
+      #bookList li{
+        overflow-x: hidden;
+        min-width: 263px;
+        color: white;
+      }
+
+      #bookList ul > div {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        max-height: 500px;
+        max-width: 25%;
+        min-width: 345px;
+        margin: 0;
+        margin: 25px;
+        padding: 70px 25px;
+        border-radius: 3px;
+        background-color: #58729129;
+      }
+
+      .book-description{
+        padding: 30px;
+        border-radius: 3px;
+        background-color: #77777726;
+        color: white;
+      }
+
+      div.expandBtn{
+        width: 140px;
+        background-color: #77777726;
+        border-radius: 2px;
+        text-align: center;
+        height: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #bookList li img{
+        height: 298px;
+        margin: auto;
+        width: 200px;
+        display: block;
+      }
+
+      #bookList div.full-width{
+        min-width: 100%;
+        max-height: initial;
+      }
+
+      #bookList .full-width li{
+        overflow-x: initial;
+        max-width: 1100px;
+        margin: auto;
+      }
+      }
+      .full-width h2{
+        text-align: center;
+      }
+
+      .flex-row h4{
+        flex: 1;
+        text-align: center;
+        margin: 0px 0px;
+        height: 40px;
+        max-width: 200px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .buy-me{
+        flex: 1;
+        text-align: center;
+        background-color: #70e470;
+        margin: 5px 0;
+        border-radius: 3px;
+      }
+
+      .buy-me-not{
+        flex: 1;
+        text-align: center;
+        background-color: #70e470;
+        margin: 5px 0;
+        border-radius: 3px;
+        opacity: 0.5;
+        color: white;
+      }
+
+      .buy-me a{
+        text-decoration: none;
+        color: white;
+       }
+    </style>
+    <script>
+      var HttpClient = function() {
+          this.get = function(aUrl, aCallback) {
+              var anHttpRequest = new XMLHttpRequest();
+              anHttpRequest.onreadystatechange = function() { 
+                  if (anHttpRequest.readyState == 4 && anHttpRequest.status == 200)
+                      aCallback(anHttpRequest.responseText);
+              }
+
+              anHttpRequest.open( "GET", aUrl, true );            
+              anHttpRequest.send( null );
+          }
+      }
+
+
+      $('#searchBooksBtn').click(function(){
+        var query = $('#searchField').val();
+        search(query);
+      })
+
+      function search(query){
+        var client = new HttpClient();
+        client.get('https://www.googleapis.com/books/v1/volumes?q='+query, function(response) {
+          var response = JSON.parse(response);
+          if(response.totalItems > 1){
+            handleResponse(response);
+          }else{
+            var str = '<p style="text-align: center;color: white;margin-top: 50px;">No Results Found</p>';
+            document.getElementById("bookList").innerHTML = str;
+          }
+        }); 
+      }
+
+      function searchAuthor(query){
+        var client = new HttpClient();
+        client.get('https://www.googleapis.com/books/v1/volumes?q='+query+'+inauthor', function(response) {
+            var response = JSON.parse(response);
+            handleResponse(response);
+        });
+      }      
+
+      function searchTitle(query){
+        var client = new HttpClient();
+        client.get('https://www.googleapis.com/books/v1/volumes?q='+query+'+intitle', function(response) {
+            var response = JSON.parse(response);
+            handleResponse(response);
+        });
+      }      
+
+      function searchPublisher(query){
+        var client = new HttpClient();
+        client.get('https://www.googleapis.com/books/v1/volumes?q='+query+'+inpublisher', function(response) {
+            var response = JSON.parse(response);
+            handleResponse(response);
+        });
+      }      
+
+      function searchSubject(query){
+        var client = new HttpClient();
+        client.get('https://www.googleapis.com/books/v1/volumes?q='+query+'+insubject', function(response) {
+            var response = JSON.parse(response);
+            handleResponse(response);
+        });
+      }      
+
+      function searchIsbn(query){
+        var client = new HttpClient();
+        client.get('https://www.googleapis.com/books/v1/volumes?q='+query+'+inisbn', function(response) {
+            var response = JSON.parse(response);
+            handleResponse(response);
+        });
+      }
+
+    
+
+
+
+      function handleResponse(response) {
+
+        var newArr = [];
+
+        for (var i = 0; i < response.items.length; i++) {
+          var item = response.items[i];
+          const { title, description, categories, pageCount, averageRating, imageLinks, infoLink, authors } = item.volumeInfo;
+
+          if(typeof (item.saleInfo.listPrice) !== 'undefined'){
+            var  buyLink  = item.saleInfo.buyLink;
+            var  amount  = item.saleInfo.listPrice.amount; 
+          }else{
+            var  buyLink  = 0;
+            var  amount  = 'not for sale'; 
+          }
+
+          var newObj = {
+            authors: authors,
+            title: title,
+            description: description,
+            pageCount: pageCount,
+            averageRating: averageRating,
+            thumbnail: imageLinks.thumbnail,
+            infoLink: infoLink,
+            amount: amount,
+            buyLink: buyLink
+          }
+          newArr.push(newObj);
+        }
+
+        console.log('new Arr: ', newArr);
+
+        handleBookListView(newArr);
+      }
+
+      function handleBookListView(books){
+
+        var str = '<ul>'
+
+        books.forEach(function(book) {
+
+
+          str += '<div>'
+          str += '<li class="bookItem">'
+          str +=    '<img src="'+book.thumbnail+'" alt="bookCover"/>'  
+          str +=    '<h2>'+book.title+'</h2>'  
+          str +=    '<div class="expandBtn"><p>expand</p></div>'
+          str +=    '<div class="flex-row space-around">'
+          str +=      '<h4>'+book.authors+'</h4>'
+          if(!book.buyLink){
+          str +=      '<h4></h4>'
+          str +=      '<h4 class="buy-me-not"><p>buy</p></h4>' 
+          }else{
+          str +=      '<h4>$'+book.amount+'</h4>'
+          str +=      '<h4 class="buy-me"><a target="_blank" href="'+book.buyLink+'">Buy</a></h4>' 
+          }
+          str +=    '</div>' 
+          str +=    '<p class="book-description">'+book.description+'</p>'  
+          str += '</li>';
+          str += '</div>'
+        }); 
+
+        str += '</ul>';
+        document.getElementById("bookList").innerHTML = str;
+      }
+
+        $(document).on("click", "div.expandBtn" , function() {
+          $(this).parent().parent().toggleClass('full-width');
+          changeButtonText($(this));
+        });        
+
+        $(document).on("click", "img" , function() {
+          $('.bookItem').parent().removeClass('full-width');
+          $(this).parent().parent().toggleClass('full-width');
+          changeButtonText($(this).siblings('.expandBtn'));
+
+        });
+
+
+
+      function changeButtonText(btn){
+        if(btn.parent().parent().hasClass('full-width')){
+          btn.html('close');
+        }else{
+          btn.html('expand');
+        }
+      }
+    </script>
+  </body>
+</html>
